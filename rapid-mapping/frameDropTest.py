@@ -1,0 +1,30 @@
+from psychopy import visual, logging, core
+import pylab
+
+mywin = visual.Window([1920,1080], fullscr=True,screen=1)
+mywin.setRecordFrameIntervals(True)
+mywin._refreshThreshold=1/120.0+0.004 #i've got 120Hz monitor and want to allow 4ms tolerance
+
+#set the log module to report warnings to the std output window (default is errors only)
+logging.console.setLevel(logging.WARNING)
+
+#create some stimuli
+stim1 = visual.PatchStim(win=mywin,tex='tri',mask='circle',units='pix',pos=(-200,-200),size=(500,500), sf=0.001, colorSpace='rgb', contrast=1.0)
+stim2 = visual.PatchStim(win=mywin,tex='tri',mask='circle',units='pix',pos=(400,200),size=(500,500), sf=0.001, colorSpace='rgb', contrast=1.0)
+stim1.setAutoDraw(True)
+stim2.setAutoDraw(True)
+
+clock = core.Clock()
+while clock.getTime()<10:
+        if clock.getTime()>5:
+            stim1.setPhase(0.01, '-')
+            stim2.setPhase(0.01, '-')
+        else:
+            stim1.setPhase(0.01, '+')
+            stim2.setPhase(0.01, '+')
+        mywin.flip()#flip the screen. This will block until the monitor is ready for the flip.
+
+pylab.plot(mywin.frameIntervals)
+pylab.show()
+
+mywin.saveFrameIntervals(fileName=None, clear=True)
