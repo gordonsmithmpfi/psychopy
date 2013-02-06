@@ -4,20 +4,21 @@ import pylab, math, serial
 #input parameters
 duration=120 #in seconds
 temporalFreq=4
-spatialFreq=0.05
+spatialFreq=0.5
 spinPeriodInSeconds = 30
 
 #serial port info
 useSerialTrigger = 0 #set to 1 to enable serial port triggering
+#ser = serial.Serial('COM10', 9600, timeout=1) 
 
 #calculated parameters
 spinDegreesPerSecond = 360 / spinPeriodInSeconds
 
 #make a window
-mywin = visual.Window(monitor='StimMonitor',size=(1920,1080),fullscr=True,screen=0)
+mywin = visual.Window(monitor='StimMonitor',size=(1920,1080),fullscr=False,screen=1)
 
 #create grating
-stim1 = visual.PatchStim(win=mywin,tex='sin',mask='none',units='deg',pos=(0,0),size=(200,200), sf=spatialFreq)
+stim1 = visual.PatchStim(win=mywin,tex='sqr',mask='gauss',units='deg',pos=(0,0),size=(10,10), sf=spatialFreq)
 stim1.setAutoDraw(True)
 
 #wait for serial
