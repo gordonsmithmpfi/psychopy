@@ -1,6 +1,10 @@
 from psychopy import visual, logging, core, filters, event
 import pylab, math, random, numpy, serial, time
 
+'''
+A demonstration of triggering stimuli using an Arduino-based DAQ setup.
+'''
+
 #trials and timing
 stimDuration = 3
 isi = 2.0
@@ -19,7 +23,7 @@ textureType = 'sqr' #'sqr' = square wave, 'sin' = sinusoidal
 
 #aperture and position parameters
 centerPoint = [0,0] 
-stimSize = [500, 500] #Size of grating. Right now only full screen works well.
+stimSize = [500, 500] #Size of grating
 
 #trigger properties
 triggered = 1 #0 = display stims at will; 1 = display stims only when triggered (low->high)

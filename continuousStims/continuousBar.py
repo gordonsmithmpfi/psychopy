@@ -23,11 +23,12 @@ stimSize = (180,4) #First number is longer dimension no matter what the orientat
 flashPeriod = 0.2 #amount of time it takes for a full cycle (on + off)
 dutyCycle = 0.8 #Amount of time flash bar is "on" vs "off". 0.5 will be 50% of the time.
 
-useSerialTrigger = 1 #0=run now, 1=wait for serial port trigger
+useSerialTrigger = 0 #0=run now, 1=wait for serial port trigger
 
 #serial port info
-ser = serial.Serial('/dev/tty.pci-serial1', 9600, timeout=1) 
+ser = None
 if useSerialTrigger==1:
+    ser = serial.Serial('/dev/tty.pci-serial1', 9600, timeout=1) 
     bytes = "1" 
     while bytes: #burn up any old bits that might be lying around in the serial buffer
         bytes = ser.read() 
@@ -36,7 +37,7 @@ if useSerialTrigger==1:
 #/dev/cu.Bluetooth-Modem.
 
 #make a window
-mywin = visual.Window(monitor='StimMonitor',size=(1920,1080),fullscr=True,screen=1)
+mywin = visual.Window(monitor='StimMonitor',fullscr=True,screen=1)
 
 #create bar stim
 barTexture = numpy.ones([256,256,3])*barColor;

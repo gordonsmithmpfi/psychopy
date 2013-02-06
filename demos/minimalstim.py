@@ -2,7 +2,7 @@ from psychopy import visual, logging, core
 import pylab, math
 
 #make a window
-mywin = visual.Window(monitor='StimMonitor',size=(1920,1080),fullscr=False,screen=1)
+mywin = visual.Window(monitor='StimMonitor',fullscr=False,screen=1)
 
 #create two gratings
 stim1 = visual.PatchStim(win=mywin,tex='sin',mask='none',units='deg',pos=(0,0),size=(4,4), sf=2)
