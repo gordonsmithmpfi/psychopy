@@ -1,6 +1,11 @@
 from psychopy import visual, logging, core
 import pylab
 
+# If you are having frame drops, try running this on a set of monitors that are
+# *exactly* the same hardware. Mixing different monitor brands, even stuff with the same specs,
+# caused frame drops in my testing. Once all the monitors were identical, frame drops went 
+# down to 0.
+
 mywin = visual.Window([1920,1080], fullscr=True,screen=1)
 mywin.setRecordFrameIntervals(True)
 mywin._refreshThreshold=1/120.0+0.004 #i've got 120Hz monitor and want to allow 4ms tolerance
