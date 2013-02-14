@@ -33,9 +33,6 @@ if useSerialTrigger==1:
     while bytes: #burn up any old bits that might be lying around in the serial buffer
         bytes = ser.read() 
 
-#/dev/tty.pci-serial0, /dev/cu.pci-serial0, /dev/tty.pci-serial1, /dev/cu.pci-serial1, /dev/tty.Bluetooth-PDA-Sync, /dev/cu.Bluetooth-PDA-Sync, /dev/tty.Bluetooth-Modem,
-#/dev/cu.Bluetooth-Modem.
-
 #make a window
 mywin = visual.Window(monitor='StimMonitor',fullscr=True,screen=1)
 
