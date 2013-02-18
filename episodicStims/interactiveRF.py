@@ -2,8 +2,8 @@
 from psychopy import visual, core, event, misc, logging, gui
 import csv
 
-# In GUI, use 1 for Gabor, 2 for noise, 3 for bar
-info= {'stimType':1, 'logPath':'c:', 'expName':'exp001.txt'}
+# In GUI, use 1 for Gabor, 2 for noise, 3 for bar, 4 for checkerboard
+info= {'stimType':1, 'logPath':'c:/users/fitzlab1', 'expName':'exp001.txt'}
 
 # logging not implemented yet
 infoDlg = gui.DlgFromDict(dictionary=info, title='Experiment Parameters')
@@ -24,11 +24,13 @@ myWin = visual.Window(monitor='laptop',
 #    units = 'deg')
 
 #INITIALISE SOME STIMULI
+# Gabor
 if info['stimType'] ==1:
     stim = visual.PatchStim(myWin,pos=(0,0), units = 'deg',
                            tex="sin",mask="gauss",
                            size=(2.0,2.0), sf=(.4), ori=90,
                            autoLog=False)#this stim changes too much for autologging to work
+# noise
 elif info['stimType']==2:
     stim = visual.DotStim(myWin, color=(1.0,1.0,1.0), dir=270, units='deg',
         nDots=500, fieldShape='square',fieldSize=4,
@@ -36,13 +38,20 @@ elif info['stimType']==2:
         signalDots='same', #are the signal dots the 'same' on each frame? (see Scase et al)
         noiseDots='walk', #do the noise dots follow random- 'walk', 'direction', or 'position'
         speed=1, coherence=0.1)
+# Bar Stim
 elif info['stimType']==3:
     stim = visual.Rect(myWin, ori=90, units='deg',
                                 fillColor=(1,1,1), size = (2,.5))
+# CheckerboardStim
+elif info['stimType']==4:
+    stim = visual.PatchStim(myWin, tex="sqrXsqr",texRes=64,
+           size=[4,4], sf=.5, mask = 'none')
+           
 myMouse = event.Mouse(win=myWin)
 message = visual.TextStim(myWin,pos=(-0.95,-0.9),alignHoriz='left',height=0.08,
     text='left-drag=Position,Up/down Keys=size,Left/Right Keys = SF, Scroll = orientation', units = 'norm',
     autoLog=False)
+
 
 while True: #continue until keypress
     #handle key presses each frame
