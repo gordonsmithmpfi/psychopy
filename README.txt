@@ -9,6 +9,6 @@ Projects in this repository
 
 **episodicStims:** Stimuli that display for a few seconds, with inter-stimulus intervals. Grating, jitter-bar, and flashed bar.
 
-**helperClasses:** For separating out triggering code from stim display code. Currently unused.
+**triggers:** For separating out triggering code from stim display code. 
 
 **installers:** Drivers and instructions to help you get started.

@@ -1,6 +1,11 @@
 from psychopy import visual, logging, core
-import pylab, math, random, numpy, serial
+import pylab, math, random, numpy, serial, imp
 import UniversalLibrary as UL #The Measurement Computing DAQ library
+
+#import the triggering class we'll be using
+triggeringCode = '../triggers/examples/importTest.py' 
+trigger = getattr(imp.load_source('', triggeringCode),  'trigger')() 
+
 
 #trials and timing
 stimDuration = 1
@@ -39,10 +44,10 @@ for trial in range(0,numTrials):
     print "Beginning Trial",trial+1
     stimOrder = range(0,len(shifts))
     random.shuffle(stimOrder)
-    
     for stimNumber in stimOrder:
         #display each stim
         print "\tStim",stimNumber+1
+        trigger.preStim()
         
         #write stimcode to MCC-DAQ
         if sendStimcodes:
@@ -56,9 +61,14 @@ for trial in range(0,numTrials):
                 barStim.setContrast(1)
             else:
                 barStim.setContrast(0)
+            trigger.preFlip()
             mywin.flip()
+            trigger.postFlip()
         #now do ISI
         clock = core.Clock()
         while clock.getTime()<isi:
             barStim.setContrast(0)
             mywin.flip()
+            
+        trigger.postStim()
+trigger.wrapUp()
