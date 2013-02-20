@@ -8,18 +8,19 @@ info= {'stimType':1, 'logPath':'c:/users/fitzlab1/documents/', 'expName':'exp001
 infoDlg = gui.DlgFromDict(dictionary=info, title='Experiment Parameters')
 increment = 0.5
 #create a window to draw in
-myWin = visual.Window(monitor='laptop',
-    size=(1366,768),
+myWin = visual.Window(monitor='stimMonitor',
+    size=(1920,1080),
     fullscr=True,
     allowGUI = False,
-    screen=0,
+    screen=1,
     units = 'deg')
 #INITIALISE SOME STIMULI
-phaseShift = 0.05
+temporalFreq = 4
+phaseShiftPeriod = 1
 increment = 0.5
 #Gabor Stim
 if info['stimType'] ==1:
-    stim = visual.PatchStim(myWin,pos=(0,0), units = 'deg',
+    stim = visual.GratingStim(myWin,pos=(0,0), units = 'deg',
                            tex="sin",mask="gauss",
                            size=(2.0,2.0), sf=(.08), ori=-90,
                            autoLog=False)#this stim changes too much for autologging to work
@@ -38,7 +39,7 @@ elif info['stimType']==3:
 # checkerboard
 elif info['stimType']==4:
     stim = visual.PatchStim(myWin, tex="sqrXsqr",texRes=64,
-           size=[4,4], sf=.5, mask = 'none')
+           size=[4,4], sf=.5, mask = 'none', pos=(1,1))
            
 myMouse = event.Mouse(win=myWin)
 message = visual.TextStim(myWin,pos=(-0.95,-0.9),alignHoriz='left',height=0.08,
@@ -56,7 +57,7 @@ while True: #continue until keypress
             print "Size", str(stim.size)
             print count
             core.quit()
-        if info['stimType'] ==1 or info['stimType'] == 4:
+        if info['stimType'] ==1:
             if key in ['q']:
                 stim.setSF(0.02, '+')
                 print "SF = ", str(stim.sf)
@@ -66,19 +67,7 @@ while True: #continue until keypress
             if key in ['1']:
                 stim.setSF(.08)
                 print "SF = ", str(stim.sf)
-        if info['stimType'] != 3:
-            if key in ['w']:
-                stim.setSize(1, '+')
-                print "Size = ", str(stim.size)
-            if key in ['s']:
-                stim.setSize(1,'-')
-                print "Size = ", str(stim.size)
-            if key in ['x']:
-                stim.setSize(500)
-                print "Size = ", str(stim.size)
-            if key in ['2']:
-                stim.setSize(2)
-                print "Size = ", str(stim.size)
+        if info['stimType'] !=3:
             if key in ['up']:
                 stim.setPos([0,increment],'+')
                 print "Position = ", str(stim.pos)
@@ -95,17 +84,14 @@ while True: #continue until keypress
                 stim.setPos([0,0])
                 print "Position=", str(stim.pos)
             if key in ['r']:
-                phaseShift = phaseShift+0.02
-                print "Phaseshift per frame=", str(phaseShift)
+                temporalFreq += 1
+                print "TF=", str(temporalFreq)
             if key in ['f']:
-                phaseShift = phaseShift - 0.02
-                print "Phaseshift per frame=", str(phaseShift)
-            if key in ['v']:
-                phaseShift = phaseShift * -1
-                print "Phaseshift per frame=", str(phaseShift)
+                temporalFreq -= 1
+                print "TF=", str(temporalFreq)
             if key in ['4']:
-                phaseShift = 0.05
-                print "Phaseshift per frame=", str(phaseShift)
+                temporalFreq = 4
+                print "TF=", str(temporalFreq)
             if key in ['t']:
                 increment = increment + 0.5
                 print "Position increment=", str(increment)
@@ -115,6 +101,14 @@ while True: #continue until keypress
             if key in ['5']:
                 increment = 0.5
                 print "Position increment=", str(increment)
+            if key in ['y']:
+                phaseShiftPeriod = phaseShiftPeriod + 0.1
+                print "Phase reverse period=", str(phaseShiftPeriod)
+            if key in ['h']:
+                phaseShiftPeriod = phaseShiftPeriod - 0.1
+                print "Phase reverse period=", str(phaseShiftPeriod)
+            if key in ['6']:
+                phaseShiftPeriod = 1
         if info['stimType'] != 2:
             if key in ['e']:
                 stim.setOri(11.25, '+')
@@ -128,7 +122,40 @@ while True: #continue until keypress
             if key in ['3']:
                 stim.setOri(-90)
                 print "Orientation=", str(stim.ori+90)
-        
+        if info['stimType']<3:
+            if key in ['s']:
+                stim.setSize(1,'-')
+                print "Size = ", str(stim.size)
+            if key in ['x']:
+                stim.setSize(500)
+                print "Size = ", str(stim.size)
+            if key in ['2']:
+                stim.setSize(2)
+                print "Size = ", str(stim.size)
+            if key in ['w']:
+                stim.setSize(1, '+')
+                print "Size = ", str(stim.size)
+        if info['stimType'] == 4:
+            if key in ['q']:
+                stim.setSF(0.5, '/')
+                print "SF = ", str(stim.sf)
+            if key in ['a']:
+                stim.setSF(0.5, '*')
+                print "SF = ", str(stim.sf)
+            if key in ['1']:
+                stim.setSF(0.5)
+                print "SF = ", str(stim.sf)
+            cSizeInc = 1/stim.sf
+            if key in ['x']:
+                stim.setSize(500)
+                print "Size = ", str(stim.size)
+            if key in ['w']:
+                stim.setSize(cSizeInc,'+')
+                print "Size = ", str(stim.size)
+            if key in ['s']:
+                stim.setSize(cSizeInc,'-')
+                print "Size = ", str(stim.size)
+                
     #get mouse events
     #Handle the wheel(s):
     # Y is the normal mouse wheel, but some (e.g. mighty mouse) have an x as well
@@ -140,41 +167,24 @@ while True: #continue until keypress
         stim.setPos([mouse_dX, mouse_dY], '+', 20)        
     wheel_dX, wheel_dY = myMouse.getWheelRel()
     stim.setOri(wheel_dY*5, '+')
-
+    clock = core.Clock()
     event.clearEvents()#get rid of other, unprocessed events
-    #do the drawi
-    if info['stimType'] < 3:
-        stim.setPhase(phaseShift, '+')#advance 0.05cycles per fram    
+    #do the draw
+    if info['stimType'] == 1:
+        stim.setPhase(.001*temporalFreq,'+')
         stim.draw()
         myWin.flip()#redraw the buffer
     elif info['stimType'] ==4:
-#        stim.setContrast(-1, '*')
-        if count % 60 == 0:
-            stim.setContrast(-1, '*')
+        clock4 = core.Clock()
+        while clock4.getTime()<phaseShiftPeriod:
             stim.draw()
             myWin.flip()
-            count +=1
-        else:
+        else: 
+            stim.setContrast(-1,'*')
             stim.draw()
             myWin.flip()
-            count +=1
-    elif info['stimType'] == 3:
-        if count %17 == 0:
-            stim.setPos([-1,0],'+')
-            stim.draw()
-            myWin.flip()
-            count += 1
-        if count % 7 == 0:
-            stim.setPos([1,0],'+')
-            stim.draw()
-            myWin.flip()
-            count += 1
-        else:
-            stim.draw()
-            myWin.flip()
-            count += 1
+            clock4.reset()
     else:
         stim.draw()
         myWin.flip()
         count += 1
-
