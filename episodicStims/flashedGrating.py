@@ -1,12 +1,12 @@
 from psychopy import visual, logging, core, filters, event
-import pylab, math, random, numpy, serial, time, csv
-import UniversalLibrary as UL
+import pylab, math, random, numpy, time, imp
 
 #trials and timing
 path = 'c:/users/fitzlab1/exp001.txt'
 expName = 'test001'
 isi = 1
 stimDuration = 1
+changeDirectionAt = stimDuration / 2 #In case the grating is moving, when do we change movement directions?
 numTrials = 1 #Run all the stims this many times
 doBlank = 1 #0 for no blank stim, 1 to have a blank stim. The blank will have the highest stimcode.
 
@@ -20,71 +20,44 @@ textureType = 'sqr' #'sqr' = square wave, 'sin' = sinusoidal
 centerPoint = [0,0] 
 stimSize = [500, 500] #Size of grating.
 
-#trigger properties
-useSerialTrigger = 1 #0 = display stims at will; 1 = display stims only when serial port trigger appears
-sendToCED = 1 #0=don't send stimcodes to CED, 1=send stimcodes
-
 #stim timing properties 
 temporalFreq = 4
 
-#DAQ setup
-boardNum = 0
-portNumA = UL.FIRSTPORTA
-portNumB = UL.FIRSTPORTB
-portDxn = UL.DIGITALOUT
-UL.cbDConfigPort(boardNum, portNumA, portDxn)
-UL.cbDConfigPort(boardNum,portNumB, portDxn)
+#Triggering mode
+#Can be any of:
+# "None" - no triggering; stim will run freely
+# "Serial" - Triggering by serial port. 
+# "SerialDaqOut" - Triggering by serial port. Stim codes are written to the MCC DAQ.
+triggerType = "None" 
+serialPortName = 'COM7' # ignored if triggerType is "None"
 
-#serial port info
-ser = None
-serialPortName = 'COM2'
-if useSerialTrigger==1:
-    ser = serial.Serial(serialPortName, 9600, timeout=0)
+#Stimulus code begins here
 
-#CSV logging 
-triggerTimes = []
-stimCodes = []
-
-def waitForSerial(ser):
-    #wait for the next time a trigger appears on the serial port
-    #Make sure to call ser.flushInput() on each flip so that the buffer will be clear before we reach here.
-    bytes = ""
-    while(bytes == ""):
-        bytes = ser.read()
-    
 #make a window
-myWin = visual.Window(monitor='testMonitor',size=(1920,1080),fullscr=True,screen=1)
+myWin = visual.Window(monitor='testMonitor',fullscr=True,screen=1)
+
+#Set up the trigger behavior
+trigger = None
+if triggerType == "SerialDaqOut":
+    triggeringCode = '../triggers/Gordon2pt/serialTriggerDaqOut.py'
+    trigger = getattr(imp.load_source('', triggeringCode), 'trigger')(serialPortName) 
+    #Record a bunch of serial triggers and fit the stim duration to an exact multiple of the trigger time
+    stimDuration = trigger.extendStimDurationToFrameEnd(stimDuration)
+    changeDirectionAt = stimDuration/2
+elif triggerType == "Serial":
+    triggeringCode = '../triggers/Gordon2pt/serialTrigger.py'
+    trigger = getattr(imp.load_source('', triggeringCode),  'trigger')(serialPortName) 
+elif triggerType == "None":
+    triggeringCode = '../triggers/Gordon2pt/noTrigger.py'
+    trigger = getattr(imp.load_source('', triggeringCode),  'trigger')() 
+else:
+    print "Unknown trigger type", triggerType
 
 #create grating stim
 gratingStim = visual.PatchStim(win=myWin,tex=textureType,units='deg',pos=centerPoint,size=stimSize, sf=spatialFreq)
 
-#figure out the time between frame triggers by recording 10 of them and determining the duration
-if useSerialTrigger:
-    print "Waiting for serial trigger on ", serialPortName, "."
-    timer = core.Clock()
-    offTime = None
-    waitForSerial(ser)
-    onTime = timer.getTime()
-    for count in range(0,10):
-        #Wait 15 msecs - this is because the serial triggers stay on for 10ms each, 
-        #and we don't want to count a single trigger multiple times
-        time.sleep(0.015)
-        ser.flushInput()
-        waitForSerial(ser)
-    offTime = timer.getTime()
-    frameTime = (offTime-onTime)/10
-    print "frame triggers are ", frameTime, " seconds apart."
-    #adjust stim duration to be some multiple of the frame time
-    stimDurationInFrames = math.ceil(stimDuration / frameTime)
-#    isiDurationInFrames = math.ceil(isi/frameTime)
-#    isi = frameTime * isiDurationInFrames
-    stimDuration = frameTime * stimDurationInFrames
-    changeDirectionAt = stimDuration/2
-    print "stim duration has been increased to ",stimDuration," seconds (",stimDurationInFrames," frames)."
-    
 #run
 print "\n",str(len(orientations)+doBlank), "stims will be run for",str(numTrials),"trials."
-timer2 = core.Clock()
 for trial in range(0,numTrials):
     #determine stim order
     print "Beginning Trial",trial+1
@@ -92,30 +65,17 @@ for trial in range(0,numTrials):
     random.shuffle(stimOrder)
     for stimNumber in stimOrder:
         #display each stim
-        if sendToCED:
-            #send stimcode to CED via measurement computing
-            UL.cbDOut(boardNum,portNumA,stimNumber+1)
-            UL.cbDOut(boardNum,portNumB,1)
-        #wait for 2pt frame trigger
-        serialNeedsReset = 0
-        if useSerialTrigger:
-            waitForSerial(ser)
-            triggerTimes.append([timer2.getTime()])
-            stimCodes.append(stimNumber)
-            
-        if sendToCED:
-            #this costs 1.2ms (+/- 0.1ms).
-            UL.cbDOut(boardNum,portNumB,0)
-            
+        trigger.preStim(stimNumber+1)
+        
         if stimNumber == len(orientations):
             #do blank
             print "\tStim",stimNumber+1, "(blank)"
             clock = core.Clock()
             while clock.getTime()<stimDuration+isi:
                 gratingStim.setContrast(0)
+                trigger.preFlip()
                 myWin.flip()
-                if useSerialTrigger:
-                    ser.flushInput() #clear serial input buffer after every flip
+                trigger.postFlip()
         else:
             #display stim
             print "\tStim",stimNumber+1
@@ -129,23 +89,16 @@ for trial in range(0,numTrials):
                     gratingStim.setPhase(changeDirectionAt*temporalFreq - (clock.getTime()-changeDirectionAt)*temporalFreq)
                 else:
                     gratingStim.setPhase(clock.getTime()*temporalFreq)
+                trigger.preFlip()
                 myWin.flip()
-                if useSerialTrigger:
-                    ser.flushInput() #clear serial input buffer after every flip
+                trigger.postFlip()
             #now do ISI
             clock = core.Clock()
             while clock.getTime()<isi:
                 gratingStim.setContrast(0)
+                trigger.preFlip()
                 myWin.flip()
-                if useSerialTrigger:
-                    ser.flushInput() #clear serial input buffer after every flip
+                trigger.postFlip()
+        trigger.postStim()
 
-#Hazel is jigglypuff
-with open(path, "a") as csvfile:
-    w = csv.writer(csvfile, dialect = "excel")
-    w.writerow([expName])
-    w.writerow([path])
-    w.writerow([stimCodes])
-    if useSerialTrigger:
-        w.writerow([triggerTimes])
-        w.writerow([frameTime])
+trigger.wrapUp()

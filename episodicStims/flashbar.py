@@ -6,7 +6,6 @@ import UniversalLibrary as UL #The Measurement Computing DAQ library
 triggeringCode = '../triggers/examples/importTest.py' 
 trigger = getattr(imp.load_source('', triggeringCode),  'trigger')() 
 
-
 #trials and timing
 stimDuration = 1
 isi=1
