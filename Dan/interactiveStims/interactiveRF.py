@@ -20,7 +20,7 @@ phaseShiftPeriod = 1
 increment = 0.5
 #Gabor Stim
 if info['stimType'] ==1:
-    stim = visual.GratingStim(myWin,pos=(0,0), units = 'deg',
+    stim = visual.PatchStim(myWin,pos=(0,0), units = 'deg',
                            tex="sin",mask="gauss",
                            size=(2.0,2.0), sf=(.08), ori=-90,
                            autoLog=False)#this stim changes too much for autologging to work
