@@ -1,55 +1,56 @@
 from psychopy import visual, logging, core, filters, event
-import pylab, math, random, numpy, time, imp
+import pylab, math, random, numpy, time, imp, sys
+sys.path.append("../triggers") #path to trigger clases
+import noTrigger, serialTriggerDaqOut #trigger imports
 
-#trials and timing
-path = 'c:/users/fitzlab1/exp001.txt'
-expName = 'test001'
-isi = 1
-stimDuration = 1
-changeDirectionAt = stimDuration / 2 #In case the grating is moving, when do we change movement directions?
+# ---------- Stimulus Description ---------- #
+'''A static grating with a short display time for orientation tuning'''
+
+# ---------- Stimulus Parameters ---------- #
+
+#trials and duration
 numTrials = 1 #Run all the stims this many times
 doBlank = 1 #0 for no blank stim, 1 to have a blank stim. The blank will have the highest stimcode.
+stimDuration = 0.3
+changeDirectionAt = stimDuration * 0.5 #In case the grating is moving, when do we change movement directions?
+isi = 0
 
 #grating parameters
 orientations = numpy.arange(0.0,180,11.25) #Remember, ranges in Python do NOT include the final value!
+temporalFreq = 4
 spatialFreq = 0.2
 contrast = 1.0
 textureType = 'sqr' #'sqr' = square wave, 'sin' = sinusoidal
 
 #aperture and position parameters
 centerPoint = [0,0] 
-stimSize = [500, 500] #Size of grating.
+stimSize = [500, 500] #Size of grating in degrees
 
-#stim timing properties 
-temporalFreq = 4
-
-#Triggering mode
-#Can be any of:
-# "None" - no triggering; stim will run freely
-# "Serial" - Triggering by serial port. 
+#Triggering type
+#Can be either:
+# "NoTrigger" - no triggering; stim will run freely
 # "SerialDaqOut" - Triggering by serial port. Stim codes are written to the MCC DAQ.
-triggerType = "None" 
+triggerType = "SerialDaqOut" 
 serialPortName = 'COM7' # ignored if triggerType is "None"
 
-#Stimulus code begins here
+#Experiment logging parameters
+logFilePath = 'c:/users/fitzlab1/exp001.txt'
+expName = 'test001'
+
+# ---------- Stimulus code begins here ---------- #
 
 #make a window
 myWin = visual.Window(monitor='testMonitor',fullscr=True,screen=1)
 
 #Set up the trigger behavior
 trigger = None
-if triggerType == "SerialDaqOut":
-    triggeringCode = '../triggers/Gordon2pt/serialTriggerDaqOut.py'
-    trigger = getattr(imp.load_source('', triggeringCode), 'trigger')(serialPortName) 
+if triggerType == "NoTrigger":
+    trigger = noTrigger.noTrigger(None) 
+elif triggerType == "SerialDaqOut":
+    trigger = serialTriggerDaqOut.serialTriggerDaqOut(serialPortName) 
     #Record a bunch of serial triggers and fit the stim duration to an exact multiple of the trigger time
     stimDuration = trigger.extendStimDurationToFrameEnd(stimDuration)
-    changeDirectionAt = stimDuration/2
-elif triggerType == "Serial":
-    triggeringCode = '../triggers/Gordon2pt/serialTrigger.py'
-    trigger = getattr(imp.load_source('', triggeringCode),  'trigger')(serialPortName) 
-elif triggerType == "None":
-    triggeringCode = '../triggers/Gordon2pt/noTrigger.py'
-    trigger = getattr(imp.load_source('', triggeringCode),  'trigger')() 
+    changeDirectionAt = stimDuration * 0.5
 else:
     print "Unknown trigger type", triggerType
 
@@ -73,9 +74,9 @@ for trial in range(0,numTrials):
             clock = core.Clock()
             while clock.getTime()<stimDuration+isi:
                 gratingStim.setContrast(0)
-                trigger.preFlip()
+                trigger.preFlip(None)
                 myWin.flip()
-                trigger.postFlip()
+                trigger.postFlip(None)
         else:
             #display stim
             print "\tStim",stimNumber+1
@@ -89,16 +90,17 @@ for trial in range(0,numTrials):
                     gratingStim.setPhase(changeDirectionAt*temporalFreq - (clock.getTime()-changeDirectionAt)*temporalFreq)
                 else:
                     gratingStim.setPhase(clock.getTime()*temporalFreq)
-                trigger.preFlip()
+                trigger.preFlip(None)
                 myWin.flip()
-                trigger.postFlip()
+                trigger.postFlip(None)
             #now do ISI
             clock = core.Clock()
             while clock.getTime()<isi:
                 gratingStim.setContrast(0)
-                trigger.preFlip()
+                trigger.preFlip(None)
                 myWin.flip()
-                trigger.postFlip()
-        trigger.postStim()
+                trigger.postFlip(None)
+        trigger.postStim(None)
 
-trigger.wrapUp()
+
+trigger.wrapUp([logFilePath, expName])

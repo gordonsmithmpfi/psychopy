@@ -1,5 +1,12 @@
 from psychopy import visual, logging, core, filters, event
-import pylab, math, random, numpy, serial, time
+import pylab, math, random, numpy, serial, time, sys
+sys.path.append("../triggers") #path to trigger clases
+import noTrigger, serialTrigger #trigger imports
+
+# ---------- Stimulus Description ---------- #
+''' A flashing, jittering bar for azimuth and elevation mapping'''
+
+# ---------- Stimulus Parameters ---------- #
 
 #trials and timing
 numTrials = 5 #Run all the stims this many times
@@ -14,7 +21,7 @@ dutyCycle = 0.5 #Amount of time flash bar is "on" vs "off". 0.5 will be on 50% o
 #Stim properties. Numbers are in visual degrees. Check monitor center to make sure your screen distance is right.
 shifts = [-16,-14,-12,-10,-8,-6,-4,-2,0,2,4,6,8,10,12,14,16] #bar position
 contrast = -1 #1 for white bars, -1 for black bars, 0.5 for grayish
-jitter = 0.5 #If jitter>0, bar will jitter on each frame of the animation. It will move by as much as (barWidth*jitter), randomly sampled.
+jitter = 0.5 #If jitter > 0, bar will jitter on each frame of the animation. It will move by as much as (barWidth*jitter), randomly sampled.
 orientation = 45 #0 is horizontal, 90 is vertical. 45 goes from up-left to down-right.
 
 #aperture and position parameters
@@ -25,10 +32,14 @@ stimSize = (1920,2) #Size of bar. First number is the longer dimension no matter
 triggered = 1 #0 = display stims at will; 1 = display stims only when triggered
 sendToCED = 1#0=don't send stimcodes to CED, 1=send stimcodes
 
-#set up serial port
-if triggered or sendToCED:
-    arduino = serial.Serial('/dev/tty.usbmodem1a21', 9600, timeout=0)
-    time.sleep(3) #need to sleep 3s to allow Arduino to initialize
+#Triggering type
+#Can be either:
+# "NoTrigger" - no triggering; stim will run freely
+# "SerialDaqOut" - Triggering by serial port. Stim codes are written to the MCC DAQ.
+triggerType = "SerialDaqOut" 
+serialPortName = 'COM7' # ignored if triggerType is "None"
+
+# ---------- Stimulus code begins here ---------- #
 
 #make a window
 mywin = visual.Window(monitor='StimMonitor',size=(1920,1080),fullscr=True,screen=1)

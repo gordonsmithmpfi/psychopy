@@ -1,10 +1,10 @@
-# Abstract triggering class. 
+# Template for a triggering class. 
 # A triggering class must contain each of these functions.
 #They can be empty / do nothing, but they must all be defined.
 #Have a look at the noTrigger class for an example of a minimal implementation.
 
 class trigger:
-    def __init__(self, args):        
+    def __init__(self, args):
         print "Template trigger code initializing"
         raise NotImplementedError
 
@@ -26,4 +26,4 @@ class trigger:
 
     def wrapUp(self, args):
         print "This code is run after all stimuli have run."
-       raise NotImplementedError 
+        raise NotImplementedError 
