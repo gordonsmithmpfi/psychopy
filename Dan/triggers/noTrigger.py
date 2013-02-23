@@ -2,9 +2,6 @@
 # sending information nor receiving it.
 from abstractTrigger import trigger
 
-#abstractTriggerCode = '../triggers/abstractTrigger.py'
-#imp.load_source('', abstractTriggerCode)
-
 class noTrigger(trigger):
     def __init__(self, args):  
         pass

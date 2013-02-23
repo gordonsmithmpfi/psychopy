@@ -6,20 +6,10 @@ import UniversalLibrary as UL
 from abstractTrigger import trigger
 
 class serialTriggerDaqOut(trigger):
-    #serial port vars
-    ser = None
-    serialPortName = None
-
-    #DAQ vars
-    boardNum = 0 #We assume that there is only one DAQ plugged in, and that it is board 0.
-
-    #CSV logging 
-    timer = None
-    triggerTimes = []
-    stimCodes = []
     
     def __init__(self, args):
         #serial port setup
+        self.boardNum = 0
         self.serialPortName = args
         self.ser = serial.Serial(self.serialPortName, 9600, timeout=0)
         
@@ -29,6 +19,8 @@ class serialTriggerDaqOut(trigger):
         
         #CSV logging setup
         self.timer = core.Clock()
+        self.triggerTimes = []
+        self.stimCodes = []
         
     # standard pre / post functions
     def preStim(self, args):

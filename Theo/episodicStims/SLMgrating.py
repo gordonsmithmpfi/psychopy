@@ -1,12 +1,15 @@
 from psychopy import visual, filters, event, core
-import numpy, time, random
-import UniversalLibrary as UL #DAQ stuff
+import numpy, time, random, sys
+sys.path.append("../triggers") #path to trigger clases
+import noTrigger, daqTrigger #trigger imports
 
+# ---------- Stimulus Description ---------- #
 '''
 This is a grating stimulus that is projected onto the cortex in blue light via the spatial light modulator (SLM).
-It reads stimulus codes from a Measurement Computing DAQ and displays the grating of appropriate orientation.
-There are some texture settings to allow a grating of a specific graylevel for the "white" stripes that you may find useful elsewhere.
+It demonstrates how to use a custom texture stimulus.
 '''
+
+# ---------- Stimulus Parameters ---------- #
 
 #stim parameters
 stimDuration = 2.5
@@ -15,19 +18,28 @@ isi = 3 #ISI will be ignored if stim is triggered
 stimContrast = 1.0
 temporalFreq = 0.04
 spatialFreq=0.005
-triggered = 0 #Do we wait for a stimcode on the DAQ to run the stimulus? 
 
-#DAQ setup
-BoardNum = None
-PortNum = None
-if triggered: 
-    BoardNum = 0
-    PortNum = UL.FIRSTPORTA
-    Direction = UL.DIGITALIN
-    UL.cbDConfigPort(BoardNum, PortNum, Direction)
+
+#Triggering type
+#Can be either:
+# "NoTrigger" - no triggering; stim will run freely
+# "DaqTrigger" - Triggering by MCC DAQ. Stimcodes arrive via DAQ and the appropriate stim is displayed.
+triggerType = "NoTrigger" 
+serialPortName = 'COM7' # ignored if triggerType is "None"
+
+# ---------- Stimulus code begins here ---------- #
 
 #set up window and stim
-win=visual.Window(size=(800,600),units="pix",screen=1)
+win=visual.Window(fullscr=True,screen=1)
+
+#Set up the trigger behavior
+trigger = None
+if triggerType == "NoTrigger":
+    trigger = noTrigger.noTrigger(None) 
+elif triggerType == "DaqTrigger":
+    trigger = daqTrigger.daqTrigger(None) 
+else:
+    print "Unknown trigger type", triggerType
 
 grating = filters.makeGrating(256,cycles=1,gratType='sqr')#ranges-1 to 1 
 texture = numpy.zeros([256,256,3]) 
@@ -41,8 +53,8 @@ blackTexture = -numpy.ones([256,256,3])
 stim=visual.PatchStim(win, tex=texture,texRes=256,sf=spatialFreq, units='pix',size=(1280,1024),ori=45,mask='none') 
 blankStim=visual.PatchStim(win, tex=blackTexture,texRes=256,sf=spatialFreq, units='pix',size=(1280,1024),ori=45,mask='none') 
 
-stim.autoLog=False#or we'll get many messages about phase change
-blankStim.autoLog=False#or we'll get many messages about phase change
+#stim.autoLog=False#or we'll get many messages about phase change
+#blankStim.autoLog=False#or we'll get many messages about phase change
 
 stimcodes = range(1,10) #remember, ranges in python do not include the final number
 random.shuffle(stimcodes)
@@ -50,18 +62,11 @@ stimpos = 0
 trialNum = 1
 
 while True:
-    stim.contrast=stimContrast
-    #read from DAQ to get stimcode for orientation
+    #get stimcode
+    stimcode = trigger.preStim(None)
     
-    stimcode = None
-    if triggered:
-        #read stimcode from daq
-        stimcode = 0;
-        while stimcode > 64 or stimcode == 0:
-            #keep trying until a valid stimcode appears
-            stimcode = UL.cbDIn(BoardNum, PortNum, stimcode)
-        print 'Got stimcode ',stimcode
-    else:
+    if stimcode == None:
+        #this means we're using some triggering method that doesn't tell us stimcodes, so we need to randomly generate them.
         if stimpos == len(stimcodes):
             #reshuffle stimcodes for the next trial
             stimpos = 0
@@ -70,7 +75,8 @@ while True:
         stimcode = stimcodes[stimpos]
         print 'Showing stimcode ',stimcode, " in trial ", trialNum
         stimpos += 1
-
+    stim.contrast=stimContrast
+    
     if stimcode==9:
         stim.setAutoDraw(False)
         blankStim.setAutoDraw(True)
@@ -87,7 +93,9 @@ while True:
             stim.setPhase(temporalFreq, '-')#decrement by 10th of cycle
         else:
             stim.setPhase(temporalFreq, '+')#increment by 10th of cycle
+        trigger.preFlip(None)
         win.flip()#flip the screen
+        trigger.postFlip(None)
 
     #now a blank screen for ISI
     clock = core.Clock()
@@ -95,4 +103,9 @@ while True:
         stim.setAutoDraw(False)
         blankStim.setAutoDraw(True)
         stim.contrast = 0
+        trigger.preFlip(None)
         win.flip()
+        trigger.postFlip(None)
+    trigger.postStim(None)
+    
+trigger.wrapUp()

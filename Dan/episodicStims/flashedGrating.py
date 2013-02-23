@@ -17,7 +17,7 @@ isi = 0
 
 #grating parameters
 orientations = numpy.arange(0.0,180,11.25) #Remember, ranges in Python do NOT include the final value!
-temporalFreq = 4
+temporalFreq = 0 #keep this at 0 for a static grating
 spatialFreq = 0.2
 contrast = 1.0
 textureType = 'sqr' #'sqr' = square wave, 'sin' = sinusoidal
@@ -101,6 +101,5 @@ for trial in range(0,numTrials):
                 myWin.flip()
                 trigger.postFlip(None)
         trigger.postStim(None)
-
 
 trigger.wrapUp([logFilePath, expName])

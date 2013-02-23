@@ -4,11 +4,9 @@ import serial
 from abstractTrigger import trigger
 
 class serialTrigger(trigger):
-    #serial port vars
-    ser = None
-    serialPortName = None
-
+    
     def __init__(self, args):
+        #serial port setup
         self.serialPortName = args
         self.ser = serial.Serial(self.serialPortName, 9600, timeout=0)
         
