@@ -13,7 +13,7 @@ numTrials = 1 #Run all the stims this many times
 doBlank = 1 #0 for no blank stim, 1 to have a blank stim. The blank will have the highest stimcode.
 stimDuration = 0.3
 changeDirectionAt = stimDuration * 0.5 #In case the grating is moving, when do we change movement directions?
-isi = 0
+isi = 2
 
 #grating parameters
 orientations = numpy.arange(0.0,180,11.25) #Remember, ranges in Python do NOT include the final value!
@@ -30,8 +30,8 @@ stimSize = [500, 500] #Size of grating in degrees
 #Can be either:
 # "NoTrigger" - no triggering; stim will run freely
 # "SerialDaqOut" - Triggering by serial port. Stim codes are written to the MCC DAQ.
-triggerType = "SerialDaqOut" 
-serialPortName = 'COM7' # ignored if triggerType is "None"
+triggerType = "NoTrigger" 
+serialPortName = 'COM2' # ignored if triggerType is "None"
 
 #Experiment logging parameters
 logFilePath = 'c:/users/fitzlab1/exp001.txt'

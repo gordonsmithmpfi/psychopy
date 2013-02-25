@@ -1,6 +1,6 @@
 # Triggers when data arrives at the serial port.
 # Sends stimcodes via Measurement Computing DAQ.
-import serial, csv, time, math
+import serial, csv, time, math, datetime
 from psychopy import core
 import UniversalLibrary as UL
 from abstractTrigger import trigger
@@ -16,28 +16,31 @@ class serialTriggerDaqOut(trigger):
         #DAQ setup        
         UL.cbDConfigPort(self.boardNum, UL.FIRSTPORTA, UL.DIGITALOUT)
         UL.cbDConfigPort(self.boardNum,UL.FIRSTPORTB, UL.DIGITALOUT)
-        
+        self.needToSendStimcode = False
+            
         #CSV logging setup
         self.timer = core.Clock()
         self.triggerTimes = []
         self.stimCodes = []
-        
+        self.dateTime = datetime.datetime.now()
+    
     # standard pre / post functions
     def preStim(self, args):
         stimNumber = args
+        
+        #record the stim number we're about to display
+        self.stimCodes.append(stimNumber)
+            
         #send stimcode to CED via measurement computing
         UL.cbDOut(self.boardNum,UL.FIRSTPORTA,stimNumber)
         UL.cbDOut(self.boardNum,UL.FIRSTPORTB,1)
 
         #wait for 2pt frame trigger
         self.waitForSerial()
-        self.triggerTimes.append(self.timer.getTime())
-        self.stimCodes.append(stimNumber)
         
-        #Tell CED to read stimcode
-        #this costs 1.2ms (+/- 0.1ms).
-        UL.cbDOut(self.boardNum,UL.FIRSTPORTB,0)
-    
+        #Tell ourselves to send the signal the CED as soon as we flip
+        self.needToSendStimcode = True
+
     def postStim(self, args):
         pass
 
@@ -45,14 +48,23 @@ class serialTriggerDaqOut(trigger):
         pass
 
     def postFlip(self, args):                
-        self.ser.flushInput() #clear serial input buffer after every flip
-
+        if self.needToSendStimcode:
+            #record the time at the first flip
+            self.triggerTimes.append(self.timer.getTime())
+            #Tell CED to read stimcode
+            #this costs 1.2ms (+/- 0.1ms).
+            UL.cbDOut(self.boardNum,UL.FIRSTPORTB,0)
+            #Only need to do this once per stim
+            self.needToSendStimcode = False
+    
     def wrapUp(self, args):
         logFilePath = args[0]
         expName = args[1]
         with open(logFilePath, "a") as csvfile:
             w = csv.writer(csvfile, dialect = "excel")
+            w.writerow(["==========="])
             w.writerow([expName])
+            w.writerow([self.dateTime])
             w.writerow([logFilePath])
             w.writerow([self.stimCodes])
             w.writerow([self.triggerTimes])
@@ -81,7 +93,7 @@ class serialTriggerDaqOut(trigger):
         frameTime = (offTime-onTime)/10
         print "frame triggers are ", frameTime, " seconds apart." 
         return frameTime
-    
+
     def extendStimDurationToFrameEnd(self, stimDuration):
         #find how often we receive triggers
         frameTime = self.getTimeBetweenTriggers()

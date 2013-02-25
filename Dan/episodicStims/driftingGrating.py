@@ -4,20 +4,20 @@ sys.path.append("../triggers") #path to trigger clases
 import noTrigger, serialTriggerDaqOut #trigger imports
 
 # ---------- Stimulus Description ---------- #
-'''A static grating with a short display time for orientation tuning'''
+'''A fullscreen drifting grating for 2pt orientation tuning'''
 
 # ---------- Stimulus Parameters ---------- #
 
 #trials and duration
+numOrientations = 4 #typically 4, 8, or 16
 numTrials = 1 #Run all the stims this many times
 doBlank = 1 #0 for no blank stim, 1 to have a blank stim. The blank will have the highest stimcode.
-stimDuration = 0.3
-changeDirectionAt = stimDuration * 0.5 #In case the grating is moving, when do we change movement directions?
-isi = 0
+stimDuration = 3
+changeDirectionAt = stimDuration * 0.5 #When do we change movement directions?
+isi = 2
 
 #grating parameters
-orientations = numpy.arange(0.0,180,11.25) #Remember, ranges in Python do NOT include the final value!
-temporalFreq = 0 #keep this at 0 for a static grating
+temporalFreq = 4
 spatialFreq = 0.2
 contrast = 1.0
 textureType = 'sqr' #'sqr' = square wave, 'sin' = sinusoidal
@@ -31,13 +31,15 @@ stimSize = [500, 500] #Size of grating in degrees
 # "NoTrigger" - no triggering; stim will run freely
 # "SerialDaqOut" - Triggering by serial port. Stim codes are written to the MCC DAQ.
 triggerType = "SerialDaqOut" 
-serialPortName = 'COM7' # ignored if triggerType is "None"
+serialPortName = 'COM2' # ignored if triggerType is "None"
 
 #Experiment logging parameters
 logFilePath = 'c:/users/fitzlab1/exp001.txt'
 expName = 'test001'
 
 # ---------- Stimulus code begins here ---------- #
+#generate the orientations based on how many we want
+orientations = numpy.arange(0.0,180,180/numOrientations) #Remember, ranges in Python do NOT include the final value!
 
 #make a window
 myWin = visual.Window(monitor='testMonitor',fullscr=True,screen=1)

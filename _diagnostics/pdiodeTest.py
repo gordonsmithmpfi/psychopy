@@ -1,5 +1,5 @@
 from psychopy import visual, logging, core
-import pylab
+import pylab, math, numpy
 
 # If you are having frame drops, try running this on a set of monitors that are
 # *exactly* the same hardware. Mixing different monitor brands, even stuff with the same specs,
@@ -14,22 +14,18 @@ mywin._refreshThreshold=1/120.0+0.004 #i've got 120Hz monitor and want to allow 
 logging.console.setLevel(logging.WARNING)
 
 #create some stimuli
-stim1 = visual.PatchStim(win=mywin,tex='tri',mask='circle',units='pix',pos=(-200,-200),size=(500,500), sf=0.001, colorSpace='rgb', contrast=1.0)
-stim2 = visual.PatchStim(win=mywin,tex='tri',mask='circle',units='pix',pos=(400,200),size=(500,500), sf=0.001, colorSpace='rgb', contrast=1.0)
+barTexture = numpy.ones([256,256,3]);
+stim1 =visual.PatchStim(win=mywin,tex=barTexture,mask='none',units='pix',pos=[-920,500],size=(100,100))
 stim1.setAutoDraw(True)
-stim2.setAutoDraw(True)
 
 clock = core.Clock()
 while clock.getTime()<100:
-        if clock.getTime()>50:
-            stim1.setPhase(0.001, '-')
-            stim2.setPhase(0.001, '-')
-        else:
-            stim1.setPhase(0.001, '+')
-            stim2.setPhase(0.001, '+')
-        mywin.flip()#flip the screen. This will block until the monitor is ready for the flip.
+    #stim1.setContrast(-1)
+    stim1.setPos([-920,500])
+    mywin.flip()#flip the screen. This will block until the monitor is ready for the flip.
+    #stim1.setContrast(1)
+    stim1.setPos([-920,0])
+    mywin.flip()#flip the screen. This will block until the monitor is ready for the flip.
 
 pylab.plot(mywin.frameIntervals)
 pylab.show()
-
-mywin.saveFrameIntervals(fileName=None, clear=True)

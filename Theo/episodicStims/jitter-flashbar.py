@@ -33,7 +33,7 @@ orientation = 45 #0 is horizontal, 90 is vertical. 45 goes from up-left to down-
 # "NoTrigger" - no triggering; stim will run freely
 # "SerialDaqOut" - Triggering by serial port. Stim codes are written to the MCC DAQ.
 triggerType = "NoTrigger" 
-serialPortName = 'COM7' # ignored if triggerType is "None"
+serialPortName = 'COM2' # ignored if triggerType is "None"
 
 # ---------- Stimulus code begins here ---------- #
 
