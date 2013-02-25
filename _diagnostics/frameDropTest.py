@@ -16,17 +16,21 @@ logging.console.setLevel(logging.WARNING)
 #create some stimuli
 stim1 = visual.PatchStim(win=mywin,tex='tri',mask='circle',units='pix',pos=(-200,-200),size=(500,500), sf=0.001, colorSpace='rgb', contrast=1.0)
 stim2 = visual.PatchStim(win=mywin,tex='tri',mask='circle',units='pix',pos=(400,200),size=(500,500), sf=0.001, colorSpace='rgb', contrast=1.0)
-stim1.setAutoDraw(True)
-stim2.setAutoDraw(True)
+stim1.setAutoDraw(False)
+stim2.setAutoDraw(False)
 
 clock = core.Clock()
-while clock.getTime()<100:
-        if clock.getTime()>50:
+while clock.getTime()<10:
+        if clock.getTime()>5:
             stim1.setPhase(0.001, '-')
             stim2.setPhase(0.001, '-')
+            stim1.draw()
+            stim2.draw()
         else:
             stim1.setPhase(0.001, '+')
             stim2.setPhase(0.001, '+')
+            stim1.draw()
+            stim2.draw()
         mywin.flip()#flip the screen. This will block until the monitor is ready for the flip.
 
 pylab.plot(mywin.frameIntervals)

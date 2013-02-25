@@ -1,5 +1,7 @@
 from psychopy import visual, logging, core
-import pylab, math, numpy
+from psychopy import log, event
+import pylab, math, numpy, matplotlib
+matplotlib.use('WXAgg')
 
 # If you are having frame drops, try running this on a set of monitors that are
 # *exactly* the same hardware. Mixing different monitor brands, even stuff with the same specs,
@@ -20,12 +22,37 @@ stim1.setAutoDraw(True)
 
 clock = core.Clock()
 while clock.getTime()<100:
-    #stim1.setContrast(-1)
-    stim1.setPos([-920,500])
+    stim1.setContrast(-1)
+    #stim1.setPos([-920,500])
     mywin.flip()#flip the screen. This will block until the monitor is ready for the flip.
-    #stim1.setContrast(1)
-    stim1.setPos([-920,0])
+    stim1.setContrast(1)
+    #stim1.setPos([-920,0])
     mywin.flip()#flip the screen. This will block until the monitor is ready for the flip.
 
-pylab.plot(mywin.frameIntervals)
+
+
+
+
+#calculate some values
+intervalsMS = pylab.array(mywin.frameIntervals[1:])*1000
+m=pylab.mean(intervalsMS)
+sd=pylab.std(intervalsMS)
+distString= "Mean=%.1fms,    s.d.=%.1f,    99%%CI=%.1f-%.1f" %(m,sd,m-3*sd,m+3*sd)
+nTotal=len(intervalsMS)
+nDropped=sum(intervalsMS>(1.5*m))
+droppedString = "Dropped/Frames = %i/%i = %.3f%%" %(nDropped,nTotal,nDropped/float(nTotal))
+
+#plot the frameintervals
+pylab.figure(figsize=[20,10])
+pylab.subplot(1,2,1)
+pylab.plot(intervalsMS, '-')
+pylab.ylabel('t (ms)')
+pylab.xlabel('frame N')
+pylab.title(droppedString)
+#
+pylab.subplot(1,2,2)
+pylab.hist(intervalsMS, 50, normed=0, histtype='stepfilled')
+pylab.xlabel('t (ms)')
+pylab.ylabel('n frames')
+pylab.title(distString)
 pylab.show()

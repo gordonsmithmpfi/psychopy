@@ -11,11 +11,10 @@ import matplotlib
 matplotlib.use('WXAgg')
 import pylab
 
-nIntervals=1000
-win = visual.Window([1280,1024], fullscr=True, allowGUI=False)
+nIntervals=10000
+win = visual.Window([1920,1080], fullscr=True, allowGUI=False, screen=1, waitBlanking=True)
 progBar = visual.PatchStim(win, tex=None, mask=None, 
-    size=[0,0.05],color='red',pos=[0,-0.9],
-    autoLog=False)
+    size=[0,0.05],color='red',pos=[0,-0.9],autoLog=False)
 myStim = visual.PatchStim(win, tex='sin', mask='gauss', 
     size=300,sf=0.05, units='pix',
     autoLog=False)
@@ -25,7 +24,7 @@ win.setRecordFrameIntervals()
 for frameN in range(nIntervals+1):
     progBar.setSize([2.0*frameN/nIntervals, 0.05])
     progBar.draw()
-    myStim.setPhase(0.1,'+')
+    myStim.setPhase(0.001,'+')
     myStim.draw()
     if event.getKeys():
         print 'stopped early'
