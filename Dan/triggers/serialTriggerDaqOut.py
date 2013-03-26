@@ -12,6 +12,8 @@ class serialTriggerDaqOut(trigger):
         self.boardNum = 0
         self.serialPortName = args
         self.ser = serial.Serial(self.serialPortName, 9600, timeout=0)
+        self.basestate=1; # what is baseline state? 1 if stimtrig is high to low, 0 if low to high
+        self.readSer=True; # if false, it will trigger immediately, but will still log data
         
         #DAQ setup        
         UL.cbDConfigPort(self.boardNum, UL.FIRSTPORTA, UL.DIGITALOUT)
@@ -33,10 +35,11 @@ class serialTriggerDaqOut(trigger):
             
         #send stimcode to CED via measurement computing
         UL.cbDOut(self.boardNum,UL.FIRSTPORTA,stimNumber)
-        UL.cbDOut(self.boardNum,UL.FIRSTPORTB,1)
+        UL.cbDOut(self.boardNum,UL.FIRSTPORTB,self.basestate)
 
         #wait for 2pt frame trigger
-        self.waitForSerial()
+        if self.readSer:
+            self.waitForSerial()
         
         #Tell ourselves to send the signal the CED as soon as we flip
         self.needToSendStimcode = True
@@ -45,7 +48,8 @@ class serialTriggerDaqOut(trigger):
         pass
 
     def preFlip(self, args):
-        pass
+        UL.cbDOut(self.boardNum,UL.FIRSTPORTB,self.basestate)#return to base state
+
 
     def postFlip(self, args):                
         if self.needToSendStimcode:
@@ -56,6 +60,8 @@ class serialTriggerDaqOut(trigger):
             UL.cbDOut(self.boardNum,UL.FIRSTPORTB,0)
             #Only need to do this once per stim
             self.needToSendStimcode = False
+        UL.cbDOut(self.boardNum,UL.FIRSTPORTB,self.basestate+2) # this should be an every frame trigger
+            
     
     def wrapUp(self, args):
         logFilePath = args[0]
@@ -95,10 +101,49 @@ class serialTriggerDaqOut(trigger):
         return frameTime
 
     def extendStimDurationToFrameEnd(self, stimDuration):
-        #find how often we receive triggers
-        frameTime = self.getTimeBetweenTriggers()
-        #adjust stim duration to be some multiple of the frame time
-        stimDurationInFrames = math.ceil(stimDuration / frameTime)
-        stimDuration = frameTime * stimDurationInFrames
-        print "stim duration has been increased to ",stimDuration," seconds (",stimDurationInFrames," frames)." 
+        if self.readSer:
+            #find how often we receive triggers
+            frameTime = self.getTimeBetweenTriggers()
+            #adjust stim duration to be some multiple of the frame time
+            stimDurationInFrames = math.ceil(stimDuration / frameTime)
+            stimDuration = frameTime * stimDurationInFrames
+            print "stim duration has been increased to ",stimDuration," seconds (",stimDurationInFrames," frames)." 
         return stimDuration
+       
+      
+#     def preTrialLogging(self, args)
+#
+#     dataDirName=args[2]
+#     animalName=args[3]
+#     testName=args[4]
+#     # write the dirname and expname for spike2
+#     f=open(datapath+'experimentname.txt','w')
+#     f.write(animalName)
+#     f.close()
+#     f=open(datapath+'instruction.txt','w')
+#     f.write(testName)
+#     f.close()
+#     # write the reference file, vht style
+#     f=open(datapath+animalName+testName+'reference.txt','w')
+#     f.write('name\tref\ttype\ntp\t'+str(1)+'\tprairietp')
+#     f.close()
+#     # now write the stim parameters
+#     
+#     
+#     
+#     # how best to write: really want header row, then values.
+#     ; fprintf(fid,'%s',expname); fclose(fid);
+#fid = fopen([datapath filesep 'instruction.txt'],'wt'); fprintf(fid,'%s',dirname); fclose(fid);
+#     
+#    
+#        logFilePath = args[0]
+#        expName = args[1]
+#        with open(logFilePath, "a") as csvfile:
+#            w = csv.writer(csvfile, dialect = "excel")
+#            w.writerow(["==========="])
+#            w.writerow([expName])
+#            w.writerow([self.dateTime])
+#            w.writerow([logFilePath])
+#            w.writerow([self.stimCodes])
+#            w.writerow([self.triggerTimes])
+ 

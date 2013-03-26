@@ -10,10 +10,12 @@ import noTrigger, serialTriggerDaqOut #trigger imports
 
 #trials and duration
 numOrientations = 4 #typically 4, 8, or 16
+orientations = numpy.arange(0.0,180,180/numOrientations) #Remember, ranges in Python do NOT include the final value!
+
 numTrials = 1 #Run all the stims this many times
 doBlank = 1 #0 for no blank stim, 1 to have a blank stim. The blank will have the highest stimcode.
 stimDuration = 3
-changeDirectionAt = stimDuration * 0.5 #When do we change movement directions?
+changeDirectionAt = 0.5 #When do we change movement directions? (in fraction of stim duration)
 isi = 2
 
 #grating parameters
@@ -30,6 +32,7 @@ stimSize = [500, 500] #Size of grating in degrees
 #Can be either:
 # "NoTrigger" - no triggering; stim will run freely
 # "SerialDaqOut" - Triggering by serial port. Stim codes are written to the MCC DAQ.
+# "OutOnly" - no input trigger, but does all output (to CED) and logging
 triggerType = "SerialDaqOut" 
 serialPortName = 'COM2' # ignored if triggerType is "None"
 
@@ -38,8 +41,6 @@ logFilePath = 'c:/users/fitzlab1/exp001.txt'
 expName = 'test001'
 
 # ---------- Stimulus code begins here ---------- #
-#generate the orientations based on how many we want
-orientations = numpy.arange(0.0,180,180/numOrientations) #Remember, ranges in Python do NOT include the final value!
 
 #make a window
 myWin = visual.Window(monitor='testMonitor',fullscr=True,screen=1)
@@ -53,13 +54,25 @@ elif triggerType == "SerialDaqOut":
     #Record a bunch of serial triggers and fit the stim duration to an exact multiple of the trigger time
     stimDuration = trigger.extendStimDurationToFrameEnd(stimDuration)
     changeDirectionAt = stimDuration * 0.5
+elif triggerType == "OutOnly":
+    trigger = serialTriggerDaqOut.serialTriggerDaqOut(serialPortName) 
+    #Record a bunch of serial triggers and fit the stim duration to an exact multiple of the trigger time
+    stimDuration = trigger.extendStimDurationToFrameEnd(stimDuration)
+    changeDirectionAt = stimDuration * 0.5
+    trigger.readSer=False
 else:
     print "Unknown trigger type", triggerType
 
 #create grating stim
-gratingStim = visual.PatchStim(win=myWin,tex=textureType,units='deg',pos=centerPoint,size=stimSize, sf=spatialFreq)
+gratingStim = visual.GratingStim(win=myWin,tex=textureType,units='deg',pos=centerPoint,size=stimSize, sf=spatialFreq)
+gratingStim.setAutoDraw(True)
+flipStim = visual.Rect(win=myWin,fillColor=(1,1,1),fillColorSpace='rgb',units='norm', pos=(-1,1),size=(.1,.1))
+flipStim.setAutoDraw(True)#up left, this is pos in y, neg in x
+clrctr=1;
+
 
 #run
+clock = core.Clock() # make one clock, instead of a new instance every time. Use 
 print "\n",str(len(orientations)+doBlank), "stims will be run for",str(numTrials),"trials."
 for trial in range(0,numTrials):
     #determine stim order
@@ -69,39 +82,38 @@ for trial in range(0,numTrials):
     for stimNumber in stimOrder:
         #display each stim
         trigger.preStim(stimNumber+1)
-        
+        #display stim
+        print "\tStim",stimNumber+1
+        gratingStim.ori = orientations[stimNumber]
+        flipStim.setContrast(1)
+        # convert orientations to standard lab notation
         if stimNumber == len(orientations):
-            #do blank
-            print "\tStim",stimNumber+1, "(blank)"
-            clock = core.Clock()
-            while clock.getTime()<stimDuration+isi:
-                gratingStim.setContrast(0)
-                trigger.preFlip(None)
-                myWin.flip()
-                trigger.postFlip(None)
+            gratingStim.setContrast(0)
+            print " (blank)"
         else:
-            #display stim
-            print "\tStim",stimNumber+1
-            gratingStim.ori = orientations[stimNumber]
-            # convert orientations to standard lab notation
             gratingStim.setContrast(contrast)
-            gratingStim.setAutoDraw(True)
-            clock = core.Clock()
-            while clock.getTime()<stimDuration:
-                if clock.getTime()>changeDirectionAt:
-                    gratingStim.setPhase(changeDirectionAt*temporalFreq - (clock.getTime()-changeDirectionAt)*temporalFreq)
-                else:
-                    gratingStim.setPhase(clock.getTime()*temporalFreq)
-                trigger.preFlip(None)
-                myWin.flip()
-                trigger.postFlip(None)
-            #now do ISI
-            clock = core.Clock()
-            while clock.getTime()<isi:
-                gratingStim.setContrast(0)
-                trigger.preFlip(None)
-                myWin.flip()
-                trigger.postFlip(None)
+        clock.reset()
+        while clock.getTime()<stimDuration:
+            clrctr=clrctr+1;
+            if clrctr%2==1:
+                flipStim.setFillColor((0,0,0),colorSpace='rgb')
+            else:
+                flipStim.setFillColor((1,1,1),colorSpace='rgb')
+            if clock.getTime()>changeDirectionAt:
+                gratingStim.setPhase(changeDirectionAt*temporalFreq - (clock.getTime()-changeDirectionAt)*temporalFreq)
+            else:
+                gratingStim.setPhase(clock.getTime()*temporalFreq)
+            trigger.preFlip(None)
+            myWin.flip()
+            trigger.postFlip(None)
+        #now do ISI
+        clock.reset()
+        while clock.getTime()<isi:
+            gratingStim.setContrast(0)
+            lipStim.setContrast(0)
+            trigger.preFlip(None)
+            myWin.flip()
+            trigger.postFlip(None)
         trigger.postStim(None)
 
 trigger.wrapUp([logFilePath, expName])
